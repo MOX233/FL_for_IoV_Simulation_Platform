@@ -1,8 +1,3 @@
-import copy
-
-from utils.federate_learning_avg import FedAvg, FedAvg_city_weighted, FedAvg_behavior_weighted
-from task_utils.traj_pred_utils.update import LocalUpdate,DatasetSplit
-
 class Trainer():
     def __init__(self, args, FL_table, dataset_train, dict_users, trainer_for_task) -> None:
         self.args = args

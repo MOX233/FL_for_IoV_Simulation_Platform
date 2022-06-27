@@ -8,12 +8,10 @@ import numpy as np
 import random
 from torch import nn, autograd, Tensor
 from torch.utils.data import DataLoader, Dataset
-from data import collate_fn
+from task_utils.traj_pred_utils.data import collate_fn
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 from numpy import float64, ndarray
 from task_utils.traj_pred_utils.utils_for_traj_pred import gpu, to_long,  Optimizer, StepLR, judge_action_for_batch
-#from utils.lstm_utils import ModelUtils, LSTMDataset, EncoderRNN, DecoderRNN, train, validate, evaluate, infer_helper, get_city_names_from_features, get_m_trajectories_along_n_cl, get_pruned_guesses, viz_predictions_helper
-
 
 
 class DatasetSplit(Dataset):
@@ -74,9 +72,8 @@ class LocalUpdate(object):
         for i, data in enumerate(self.ldr_train):
             #import ipdb;ipdb.set_trace()
             if i < local_iter-local_epoch*len(self.ldr_train):
-                if (local_epoch*len(self.ldr_train)+i+1)%print_interval == 0:
-                    print("Local training {}/{}".format(local_epoch*len(self.ldr_train)+i+1, local_iter))
-
+                """if (local_epoch*len(self.ldr_train)+i+1)%print_interval == 0:
+                    print("Local training {}/{}".format(local_epoch*len(self.ldr_train)+i+1, local_iter))"""
                 data = dict(data)
                 output = net(data)
                 loss_out = loss(output, data)

@@ -2,22 +2,18 @@ import torch
 from torch.utils.data import DataLoader, Dataset
 import time
 import numpy as np
-#from torch.utils.data.dataloader import DataLoader
-import os
 import copy
-from importlib import import_module
+from utils.FL_utils import FedAvg
+from task_utils.traj_pred_utils.lanegcn import get_model
 from task_utils.traj_pred_utils.update import LocalUpdate,DatasetSplit
-from utils.federate_learning_avg import FedAvg, FedAvg_city_weighted, FedAvg_behavior_weighted
-
+from task_utils.traj_pred_utils.FedAvg_for_traj_pred import FedAvg_city_weighted, FedAvg_behavior_weighted
 
 def get_net_for_traj_pred(args):
-    model = import_module('lanegcn')
-    config, Dataset, collate_fn, net, Loss, post_process = model.get_model(args)
+    config, Dataset, collate_fn, net, Loss, post_process = get_model(args)
     return net
 
 def get_dataset_for_traj_pred(args):
-    model = import_module('lanegcn')
-    config, Dataset, collate_fn, net, Loss, post_process = model.get_model(args)
+    config, Dataset, collate_fn, net, Loss, post_process = get_model(args)
     print("Loading dataset")
     start_time = time.time()
     dataset_train = Dataset(config, train=True)
@@ -162,8 +158,7 @@ class Trainer_for_traj_pred(object):
     def __init__(self, args, dataset_train):
         self.args = args
         self.dataset_train = dataset_train
-        model = import_module('lanegcn')
-        self.config, _, _, _, _, _ = model.get_model(args)
+        self.config, _, _, _, _, _ = get_model(args)
 
     def train_a_round(self, idxs_list, net_glob):
         loss_locals = []
@@ -203,8 +198,7 @@ class Trainer_for_traj_pred(object):
 
 class Evaluator_for_traj_pred():
     def __init__(self, args, dataset_val) -> None:
-        model = import_module('lanegcn')
-        _, _, collate_fn, _, self.Loss, self.post_process = model.get_model(args)
+        _, _, collate_fn, _, self.Loss, self.post_process = get_model(args)
 
         self.val_loader = DataLoader(
             dataset_val,

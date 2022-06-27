@@ -11,14 +11,167 @@ import torch
 import numpy as np
 import pandas as pd
 import pickle as pkl
+import matplotlib.pyplot as plt
+
 from torch import optim
+from collections import OrderedDict
 from typing import Any, Dict, List, Tuple, Union
-import utils.baseline_utils as baseline_utils
-from utils.baseline_utils import viz_predictions
-from utils.baseline_config import FEATURE_FORMAT
 from torch.utils.data import DataLoader
 from argoverse.map_representation.map_api import ArgoverseMap
 from argoverse.evaluation.eval_forecasting import compute_forecasting_metrics
+
+FEATURE_FORMAT = {
+    "TIMESTAMP": 0,
+    "TRACK_ID": 1,
+    "OBJECT_TYPE": 2,
+    "X": 3,
+    "Y": 4,
+    "CITY_NAME": 5,
+    "MIN_DISTANCE_FRONT": 6,
+    "MIN_DISTANCE_BACK": 7,
+    "NUM_NEIGHBORS": 8,
+    "OFFSET_FROM_CENTERLINE": 9,
+    "DISTANCE_ALONG_CENTERLINE": 10,
+}
+
+def viz_predictions(
+        input_: np.ndarray,
+        output: np.ndarray,
+        target: np.ndarray,
+        centerlines: np.ndarray,
+        city_names: np.ndarray,
+        idx=None,
+        show: bool = True,
+) -> None:
+    """Visualize predicted trjectories.
+
+    Args:
+        input_ (numpy array): Input Trajectory with shape (num_tracks x obs_len x 2)
+        output (numpy array of list): Top-k predicted trajectories, each with shape (num_tracks x pred_len x 2)
+        target (numpy array): Ground Truth Trajectory with shape (num_tracks x pred_len x 2)
+        centerlines (numpy array of list of centerlines): Centerlines (Oracle/Top-k) for each trajectory
+        city_names (numpy array): city names for each trajectory
+        show (bool): if True, show
+
+    """
+    num_tracks = input_.shape[0]
+    obs_len = input_.shape[1]
+    pred_len = target.shape[1]
+
+    plt.figure(0, figsize=(8, 7))
+    #plt.figure(idx, figsize=(8, 7))
+    avm = ArgoverseMap()
+    for i in range(num_tracks):
+        plt.plot(
+            input_[i, :, 0],
+            input_[i, :, 1],
+            color="#ECA154",
+            label="Observed",
+            alpha=1,
+            linewidth=3,
+            zorder=15,
+        )
+        plt.plot(
+            input_[i, -1, 0],
+            input_[i, -1, 1],
+            "o",
+            color="#ECA154",
+            label="Observed",
+            alpha=1,
+            linewidth=3,
+            zorder=15,
+            markersize=9,
+        )
+        plt.plot(
+            target[i, :, 0],
+            target[i, :, 1],
+            color="#d33e4c",
+            label="Target",
+            alpha=1,
+            linewidth=3,
+            zorder=20,
+        )
+        plt.plot(
+            target[i, -1, 0],
+            target[i, -1, 1],
+            "o",
+            color="#d33e4c",#red
+            label="Target",
+            alpha=1,
+            linewidth=3,
+            zorder=20,
+            markersize=9,
+        )
+
+        for j in range(len(centerlines[i])):
+            plt.plot(
+                centerlines[i][j][:, 0],
+                centerlines[i][j][:, 1],
+                "--",
+                color="grey",
+                alpha=1,
+                linewidth=1,
+                zorder=0,
+            )
+
+        for j in range(len(output[i])):
+            plt.plot(
+                output[i][j][:, 0],
+                output[i][j][:, 1],
+                color="#007672",#green
+                label="Predicted",
+                alpha=1,
+                linewidth=3,
+                zorder=15,
+            )
+            plt.plot(
+                output[i][j][-1, 0],
+                output[i][j][-1, 1],
+                "o",
+                color="#007672",
+                label="Predicted",
+                alpha=1,
+                linewidth=3,
+                zorder=15,
+                markersize=9,
+            )
+            for k in range(pred_len):
+                lane_ids = avm.get_lane_ids_in_xy_bbox(
+                    output[i][j][k, 0],
+                    output[i][j][k, 1],
+                    city_names[i],
+                    query_search_range_manhattan=2.5,
+                )
+
+        for j in range(obs_len):
+            lane_ids = avm.get_lane_ids_in_xy_bbox(
+                input_[i, j, 0],
+                input_[i, j, 1],
+                city_names[i],
+                query_search_range_manhattan=2.5,
+            )
+            [avm.draw_lane(lane_id, city_names[i]) for lane_id in lane_ids]
+        for j in range(pred_len):
+            lane_ids = avm.get_lane_ids_in_xy_bbox(
+                target[i, j, 0],
+                target[i, j, 1],
+                city_names[i],
+                query_search_range_manhattan=2.5,
+            )
+            [avm.draw_lane(lane_id, city_names[i]) for lane_id in lane_ids]
+
+        plt.axis("equal")
+        plt.xticks([])
+        plt.yticks([])
+        handles, labels = plt.gca().get_legend_handles_labels()
+        by_label = OrderedDict(zip(labels, handles))
+        if show:
+            print('visualize '+str(idx))
+            os.makedirs('./viz_trajectories', exist_ok=True)
+            plt.savefig('./viz_trajectories/'+str(idx)+'.png')
+            plt.clf()
+
+
 
 def judge_action(traj, sth=0.1):
     

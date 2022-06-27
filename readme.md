@@ -11,6 +11,8 @@ python simulation_run.py --gpu 0 #使用0号gpu进行训练
 
 python simulation_run.py --gpu -1 #使用cpu进行训练
 
+python simulation_run.py --num_steps 200 #将总训练时长设为200s
+
 python simulation_run.py --local_iter_num 20 --no_sumo_run #将本地训练迭代次数设为20，同时不运行sumo仿真，直接读取现有的车流信息文件
 
 ## 常用仿真参数设置(详见utils.options.py)

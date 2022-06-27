@@ -11,17 +11,16 @@ from numbers import Number
 import torch
 from torch import Tensor, nn
 from torch.nn import functional as F
-
-from data import ArgoDataset, collate_fn
-from task_utils.traj_pred_utils.utils_for_traj_pred import gpu, to_long,  Optimizer, StepLR
-
-from layers import Conv1d, Res1d, Linear, LinearRes, Null
 from numpy import float64, ndarray
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
-
+from task_utils.traj_pred_utils.data import ArgoDataset, collate_fn
+from task_utils.traj_pred_utils.utils_for_traj_pred import gpu, to_long,  Optimizer, StepLR
+from task_utils.traj_pred_utils.layers import Conv1d, Res1d, Linear, LinearRes, Null
 
 file_path = os.path.abspath(__file__)
 root_path = os.path.dirname(file_path)
+root_path = os.path.dirname(root_path)
+root_path = os.path.dirname(root_path)
 model_name = os.path.basename(file_path).split(".")[0]
 
 class Net(nn.Module):
