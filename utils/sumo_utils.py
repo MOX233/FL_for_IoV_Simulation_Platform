@@ -1,18 +1,10 @@
 #!/usr/bin/env python
 import os
 import sys
-# we need to import python modules from the $SUMO_HOME/tools directory
-if 'SUMO_HOME' in os.environ:
-    tools = os.path.join(os.environ['SUMO_HOME'], 'tools')
-    sys.path.append(tools)
-else:
-    sys.exit("please declare environment variable 'SUMO_HOME'")
+
 import csv
 import random
-import csv
-import traci  # noqa
 from decimal import Decimal
-from sumolib import checkBinary  # noqa
 
 
 def generate_routefile(args, save_dir="./sumo_data"):
@@ -121,6 +113,14 @@ def generate_cfgfile(args, save_dir="./sumo_data"):
 </configuration>""", file=cfgfile)
 
 def sumo_run(args, save_dir="./sumo_data"):
+    # we need to import python modules from the $SUMO_HOME/tools directory
+    if 'SUMO_HOME' in os.environ:
+        tools = os.path.join(os.environ['SUMO_HOME'], 'tools')
+        sys.path.append(tools)
+        import traci  # noqa
+        from sumolib import checkBinary  # noqa
+    else:
+        sys.exit("please declare environment variable 'SUMO_HOME'")
     # this script has been called from the command line. It will start sumo as a
     # server, then connect and run
 
@@ -147,6 +147,15 @@ def sumo_run(args, save_dir="./sumo_data"):
 def sumo_run_with_trajectoryInfo(args, save_dir="./sumo_data"):
     # this script has been called from the command line. It will start sumo as a
     # server, then connect and run
+
+    # we need to import python modules from the $SUMO_HOME/tools directory
+    if 'SUMO_HOME' in os.environ:
+        tools = os.path.join(os.environ['SUMO_HOME'], 'tools')
+        sys.path.append(tools)
+        import traci  # noqa
+        from sumolib import checkBinary  # noqa
+    else:
+        sys.exit("please declare environment variable 'SUMO_HOME'")
 
     if args.nogui:
         sumoBinary = checkBinary('sumo')

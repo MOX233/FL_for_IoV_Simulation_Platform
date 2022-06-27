@@ -59,8 +59,8 @@ class LocalUpdate(object):
         print_interval = int(local_iter/2)
         for epoch in range(local_epoch):
             for i, data in enumerate(self.ldr_train):
-                if (epoch*len(self.ldr_train)+i+1)%print_interval == 0:
-                    print("Local training {}/{}".format(epoch*len(self.ldr_train)+i+1, local_iter))
+                """if (epoch*len(self.ldr_train)+i+1)%print_interval == 0:
+                    print("Local training {}/{}".format(epoch*len(self.ldr_train)+i+1, local_iter))"""
                 data = dict(data)
                 output = net(data)
                 loss_out = loss(output, data)
