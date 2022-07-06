@@ -3,7 +3,7 @@ from torch.utils.data import DataLoader, Dataset
 import time
 import numpy as np
 import copy
-from utils.FL_utils import FedAvg, DatasetSplit
+from utils.FL_utils import FedAvg, DatasetSplit, Trainer_abc, Evaluator_abc
 from task_utils.traj_pred_utils.lanegcn import get_model
 from task_utils.traj_pred_utils.update import LocalUpdate_for_traj_pred
 from task_utils.traj_pred_utils.FedAvg_for_traj_pred import FedAvg_city_weighted, FedAvg_behavior_weighted
@@ -48,11 +48,12 @@ def generate_split_dict_for_traj_pred(args, dataset):
 
 ###################################################
 ################     trainer    ###################
-class Trainer_for_traj_pred(object):
+class Trainer_for_traj_pred(Trainer_abc):
     # local_iter and local_batch_size can be given flexibly
     def __init__(self, args, dataset_train):
-        self.args = args
-        self.dataset_train = dataset_train
+        super().__init__(args, dataset_train)
+        #self.args = args
+        #self.dataset_train = dataset_train
         self.config, _, _, _, _, _ = get_model(args)
 
     def train_a_round(self, idxs_list, net_glob):
@@ -91,10 +92,10 @@ class Trainer_for_traj_pred(object):
 ###################################################
 ################   evaluation   ###################
 
-class Evaluator_for_traj_pred():
+class Evaluator_for_traj_pred(Evaluator_abc):
     def __init__(self, args, dataset_val) -> None:
+        super().__init__(args, dataset_val)
         _, _, collate_fn, _, self.Loss, self.post_process = get_model(args)
-
         self.val_loader = DataLoader(
             dataset_val,
             #batch_size=args.val_batch_size, # To be added
@@ -105,8 +106,7 @@ class Evaluator_for_traj_pred():
         )
 
 
-
-    def eval_for_traj_pred(self, net, round):
+    def eval_a_round(self, net, round):
         start_time = time.time()
         metrics = dict()
         for i, data in enumerate(self.val_loader):

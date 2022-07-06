@@ -5,7 +5,7 @@ class Trainer():
         self.dataset_train = dataset_train
         self.dict_users = dict_users
         self.train_loss_list = []
-        self.trainer = trainer_for_task
+        self.trainer_for_task = trainer_for_task
 
     def train_a_round(self, net_glob, round):
         net_glob.train()
@@ -15,7 +15,7 @@ class Trainer():
             train_loss = None
         else:
             idxs_list = [self.dict_users[i] for i in idxs_users]
-            train_loss = self.trainer.train_a_round(idxs_list, net_glob)
+            train_loss = self.trainer_for_task.train_a_round(idxs_list, net_glob)
 
             print('Average Training Loss {:.5f}'.format(train_loss))
         self.train_loss_list.append(train_loss)

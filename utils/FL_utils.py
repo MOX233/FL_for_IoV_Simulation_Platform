@@ -47,5 +47,21 @@ class DatasetSplit(Dataset):
         data = self.dataset[self.idxs[item]]
         return data
 
+class Trainer_abc(object, metaclass=abc.ABCMeta):
+    def __init__(self, args, dataset_train) -> None:
+        self.args = args
+        self.dataset_train = dataset_train
+    
+    @abc.abstractmethod
+    def train_a_round(self, idxs_list, net_glob):
+        pass
 
+class Evaluator_abc(metaclass=abc.ABCMeta):
+    def __init__(self, args, dataset_val) -> None:
+        self.args = args
+        self.dataset_val = dataset_val
+
+    @abc.abstractmethod
+    def eval_a_round(self, net, round):
+        pass
 

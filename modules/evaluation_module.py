@@ -6,7 +6,7 @@ class Evaluator():
         self.val_loss_list = []
         self.eval_metrices_list = []
         self.args = args
-        self.evaluator = evaluator_for_task
+        self.evaluator_for_task = evaluator_for_task
 
     def eval_for_None(self, net, round):
         if len(self.val_loss_list) > 0:
@@ -17,7 +17,7 @@ class Evaluator():
 
     def eval(self, net, round):
         net.eval()
-        loss, eval_metrices = self.evaluator.eval_for_traj_pred(net, round)
+        loss, eval_metrices = self.evaluator_for_task.eval_a_round(net, round)
         self.val_loss_list.append(loss)
         self.eval_metrices_list.append(eval_metrices)
         net.train()
