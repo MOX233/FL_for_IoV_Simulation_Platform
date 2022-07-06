@@ -34,6 +34,7 @@ FEATURE_FORMAT = {
     "DISTANCE_ALONG_CENTERLINE": 10,
 }
 
+
 def viz_predictions(
         input_: np.ndarray,
         output: np.ndarray,
@@ -172,7 +173,6 @@ def viz_predictions(
             plt.clf()
 
 
-
 def judge_action(traj, sth=0.1):
     
     #traj shape (50,2)
@@ -200,6 +200,7 @@ def judge_action(traj, sth=0.1):
     else:
         return "go straight"
 
+
 def judge_action_for_batch(data_input, sth=0.01, prt=False):
     results = []
     for idx in range(len(data_input['feats'])):
@@ -219,23 +220,52 @@ def judge_action_for_batch(data_input, sth=0.01, prt=False):
             print(idx,result)
     return results
 
-def get_behavior_split_dict(dataloader, sth=0.01):
-    behavior_dict = {'go straight':[], 'turn left':[], 'turn right':[]}
-    results = []
-    for idx, data_input in enumerate(dataloader):
-        results.append(judge_action_for_batch(data_input, sth=sth, prt=False)[0][0])
-    for idx, result in enumerate(results):
-        behavior_dict[result].append(idx)
-    return behavior_dict
 
-def get_behavior_split_dict_v2(dataloader, sth=0.01):
-    behavior_dict = {'go straight':[], 'turn':[]}
+def generate_city_split_dict(dataset):
+    city_split_dict = {'MIA':[], 'PIT':[]}
+    for idx,data in enumerate(dataset.split):
+        city_split_dict[data['city']].append(idx)
+    return city_split_dict
+
+
+def generate_behavior_split_dict(dataset, sth=0.01):
+    behavior_split_dict = {'go straight':[], 'turn':[]}
     results = []
-    for idx, data_input in enumerate(dataloader):
+    bhv_train_ldr = DataLoader(
+        dataset,
+        batch_size=1,
+        shuffle=False,
+        collate_fn=collate_fn
+    )
+    for idx, data_input in enumerate(bhv_train_ldr):
         results.append('go straight' if 'go straight' == judge_action_for_batch(data_input, sth=sth, prt=False)[0][0] else 'turn')
     for idx, result in enumerate(results):
-        behavior_dict[result].append(idx)
-    return behavior_dict
+        behavior_split_dict[result].append(idx)
+    return behavior_split_dict
+
+
+def collate_fn(batch):
+    batch = from_numpy(batch)
+    return_batch = dict()
+    # Batching by use a list for non-fixed size
+    for key in batch[0].keys():
+        return_batch[key] = [x[key] for x in batch]
+    return return_batch
+
+
+def from_numpy(data):
+    """Recursively transform numpy.ndarray to torch.Tensor.
+    """
+    if isinstance(data, dict):
+        for key in data.keys():
+            data[key] = from_numpy(data[key])
+    if isinstance(data, list) or isinstance(data, tuple):
+        data = [from_numpy(x) for x in data]
+    if isinstance(data, np.ndarray):
+        """Pytorch now has bool type."""
+        data = torch.from_numpy(data)
+    return data
+
 
 def index_dict(data, idcs):
     returns = dict()
@@ -275,6 +305,7 @@ def save_ckpt(net, save_dir, round):
         {"epoch": round, "state_dict": state_dict},
         os.path.join(save_dir, save_name),
     )
+
 
 class Logger(object):
     def __init__(self, log):
@@ -325,6 +356,7 @@ def to_long(data):
     if torch.is_tensor(data) and data.dtype == torch.int16:
         data = data.long()
     return data
+
 
 class Optimizer(object):
     def __init__(self, params, config, coef=None):
@@ -403,8 +435,6 @@ class StepLR:
                 break
             idx += 1
         return self.lr[idx]
-
-
 
 
 def get_city_names_from_features(features_df: pd.DataFrame) -> Dict[int, str]:

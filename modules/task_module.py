@@ -35,8 +35,6 @@ def load_pretrain(net, pretrain_dict):
 
 def get_traj_pred_task(args):
     net = get_net_for_traj_pred(args)
-
-    ##### get dataset #####
     dataset_train, dataset_val = get_dataset_for_traj_pred(args)
     evaluator_for_traj_pred = Evaluator_for_traj_pred(args, dataset_val)
     trainer_for_traj_pred = Trainer_for_traj_pred(args, dataset_train)

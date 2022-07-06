@@ -11,28 +11,15 @@ from torch.utils.data import DataLoader, Dataset
 from task_utils.traj_pred_utils.data import collate_fn
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type, Union
 from numpy import float64, ndarray
+from utils.FL_utils import DatasetSplit
 from task_utils.traj_pred_utils.utils_for_traj_pred import gpu, to_long,  Optimizer, StepLR, judge_action_for_batch
 
 
-class DatasetSplit(Dataset):
-    def __init__(self, dataset, idxs):
-        self.dataset = dataset
-        self.idxs = list(idxs)
 
-    def __len__(self):
-        return len(self.idxs)
-
-    def __getitem__(self, item):
-        #import ipdb;ipdb.set_trace()
-        data = self.dataset[self.idxs[item]]
-        return data
-
-
-class LocalUpdate(object):
+class LocalUpdate_for_traj_pred(object):
     # local_iter and local_batch_size can be given flexibly
     def __init__(self, args, dataset=None, idxs=None, local_bs=1):
         self.args = args
-        self.criterion = nn.MSELoss()
         self.selected_clients = []
         self.ldr_train = DataLoader(
             #dataset,
