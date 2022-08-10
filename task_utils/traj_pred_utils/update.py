@@ -20,7 +20,6 @@ class LocalUpdate_for_traj_pred(object):
     # local_iter and local_batch_size can be given flexibly
     def __init__(self, args, dataset=None, idxs=None, local_bs=1):
         self.args = args
-        self.selected_clients = []
         self.ldr_train = DataLoader(
             #dataset,
             DatasetSplit(dataset, idxs),

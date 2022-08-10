@@ -7,7 +7,15 @@ from utils.FL_utils import FedAvg, DatasetSplit, Trainer_abc, Evaluator_abc
 from task_utils.traj_pred_utils.lanegcn import get_model
 from task_utils.traj_pred_utils.update import LocalUpdate_for_traj_pred
 from task_utils.traj_pred_utils.FedAvg_for_traj_pred import FedAvg_city_weighted, FedAvg_behavior_weighted
-from task_utils.traj_pred_utils.utils_for_traj_pred import generate_city_split_dict, generate_behavior_split_dict
+from task_utils.traj_pred_utils.utils_for_traj_pred import generate_city_split_dict, generate_behavior_split_dict, plot_for_traj_pred_task
+
+def get_traj_pred_task(args):
+    net = get_net_for_traj_pred(args)
+    dataset_train, dataset_val = get_dataset_for_traj_pred(args)
+    evaluator_for_traj_pred = Evaluator_for_traj_pred(args, dataset_val)
+    trainer_for_traj_pred = Trainer_for_traj_pred(args, dataset_train)
+    plot_func_for_traj_pred = plot_for_traj_pred_task
+    return dataset_train, net, generate_split_dict_for_traj_pred, evaluator_for_traj_pred, trainer_for_traj_pred, plot_func_for_traj_pred
 
 def get_net_for_traj_pred(args):
     config, Dataset, collate_fn, net, Loss, post_process = get_model(args)

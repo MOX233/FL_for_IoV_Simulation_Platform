@@ -13,8 +13,6 @@ from modules import platform
 # this is the main entry point of this script
 if __name__ == "__main__":
     args = args_parser()
-    args.MU_local_train = args.local_iter * args.mu_local_train
-    args.BETA_local_train = args.local_iter * args.beta_local_train
 
     file_path = os.path.abspath(__file__)
     root_path = os.path.dirname(file_path)

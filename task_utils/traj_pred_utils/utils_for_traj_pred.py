@@ -1,9 +1,7 @@
 # Copyright (c) 2020 Uber Technologies, Inc.
 # Please check LICENSE for more detail
 
-
 import sys
-import cv2
 import os
 import tempfile
 import shutil
@@ -20,6 +18,8 @@ from torch.utils.data import DataLoader
 from argoverse.map_representation.map_api import ArgoverseMap
 from argoverse.evaluation.eval_forecasting import compute_forecasting_metrics
 
+from utils.plot_utils import min_ignore_None, max_ignore_None, plot_dashed_line_for_None_samples
+
 FEATURE_FORMAT = {
     "TIMESTAMP": 0,
     "TRACK_ID": 1,
@@ -33,6 +33,91 @@ FEATURE_FORMAT = {
     "OFFSET_FROM_CENTERLINE": 9,
     "DISTANCE_ALONG_CENTERLINE": 10,
 }
+
+
+def plot_for_traj_pred_task(args, loss_train, loss_val, metrices_eval, rounds):
+    plt.figure(figsize=(15, 15), dpi=100)
+    # loss
+    plt.subplot(2, 2, 1)
+    plt.plot(range(len(loss_train)), loss_train,
+             color='r', marker='o', markersize=4, label='Training Loss')
+    plot_dashed_line_for_None_samples(range(len(loss_train)), loss_train, color='r')
+
+    plt.plot(range(len(loss_val)), loss_val,
+             color='b', label='Validation Loss')
+    plt.xlabel('round')
+    plt.ylabel('train_loss')
+    plt.legend()
+    # accuracy
+    plt.subplot(2, 2, 2)
+    plt.plot(range(len(metrices_eval)), [i["minADE"]
+             for i in metrices_eval], color='r', linestyle='--', marker='*', label='minADE(K=6)')
+    plt.plot(range(len(metrices_eval)), [i["minFDE"]
+             for i in metrices_eval], color='g', linestyle='--', marker='*', label='minFDE(K=6)')
+    plt.xlabel('round')
+    plt.ylabel('minADE/minFDE')
+    plt.legend()
+    plt.subplot(2, 2, 4)
+    plt.plot(range(len(metrices_eval)), [i["MR"]
+             for i in metrices_eval], color='b', label='MR')
+    plt.xlabel('round')
+    plt.ylabel('MR')
+    plt.legend()
+    # params description
+    plt.subplot(2, 2, 3)
+    plt.axis([0, 11, 0, 11])
+    plt.axis('off')
+    fontsize = 12
+    plt.text(0, 10, 'Round Num: {}'.format(rounds), fontsize=fontsize)
+    plt.text(0, 9, 'Round Duration: {}'.format(
+        args.round_duration), fontsize=fontsize)
+    plt.text(0, 8, 'mu for Local Train Delay: {}'.format(
+        args.mu_local_train), fontsize=fontsize)
+    plt.text(0, 7, 'beta for Local Train Delay: {}'.format(
+        args.beta_local_train), fontsize=fontsize)
+    plt.text(0, 6, 'Local Iter Num: {}'.format(
+        args.local_iter), fontsize=fontsize)
+    plt.text(0, 5, 'Local Batch Size: {}'.format(
+        args.local_bs), fontsize=fontsize)
+    plt.text(0, 4, 'Learning Rate: {}'.format(args.lr), fontsize=fontsize)
+    plt.text(0, 3, 'non-i.i.d.: {}'.format(args.non_iid), fontsize=fontsize)
+    if min_ignore_None(loss_train)!=None:
+        plt.text(0, 1, 'min_train_loss: {:.6f}'.format(
+            min_ignore_None(loss_train)), fontsize=fontsize)
+    else:
+        plt.text(0, 1, 'min_train_loss: {}'.format(
+            min_ignore_None(loss_train)), fontsize=fontsize)
+    plt.text(0, 0, 'min_val_loss: {:.6f}'.format(min_ignore_None(loss_val)), fontsize=fontsize)
+
+    plt.text(6, 10, 'Lambda: {}'.format(args.Lambda), fontsize=fontsize)
+    plt.text(6, 9, 'maxSpeed: {}'.format(args.maxSpeed), fontsize=fontsize)
+    plt.text(6, 8, 'delay_download: {}'.format(
+        args.delay_download), fontsize=fontsize)
+    plt.text(6, 7, 'delay_upload: {}'.format(args.delay_upload), fontsize=fontsize)
+
+    plt.text(6, 5, 'min_minADE: {:.6f}'.format(
+        min_ignore_None([i["minADE"] for i in metrices_eval])), fontsize=fontsize)
+    plt.text(6, 4, 'min_minADE1: {:.6f}'.format(
+        min_ignore_None([i["minADE1"] for i in metrices_eval])), fontsize=fontsize)
+    plt.text(6, 3, 'min_minFDE: {:.6f}'.format(
+        min_ignore_None([i["minFDE"] for i in metrices_eval])), fontsize=fontsize)
+    plt.text(6, 2, 'min_minFDE1: {:.6f}'.format(
+        min_ignore_None([i["minFDE1"] for i in metrices_eval])), fontsize=fontsize)
+    plt.text(6, 1, 'min_MR: {:.6f}'.format(
+        min_ignore_None([i["MR"] for i in metrices_eval])), fontsize=fontsize)
+    plt.text(6, 0, 'min_MR1: {:.6f}'.format(
+        min_ignore_None([i["MR1"] for i in metrices_eval])), fontsize=fontsize)
+
+    savePath = "./save"
+    if args.plot_save_path != "default":
+        savePath = args.plot_save_path
+    os.makedirs(savePath, exist_ok=True)
+    savePath = os.path.join(savePath, 'RoundDuration{}_LocalTrainDelay_mu{}_beta{}_LocalIterNum{}_LocalBatchSize{}_Lambda{}_maxSpeed{}_noniid{}.png'.format(
+        args.round_duration, args.mu_local_train, args.beta_local_train, args.local_iter, args.local_bs, args.Lambda, args.maxSpeed, args.non_iid))
+    #debug
+    #import ipdb;ipdb.set_trace()
+    plt.savefig(savePath)
+    plt.close()
 
 
 def viz_predictions(

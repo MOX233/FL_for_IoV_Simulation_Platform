@@ -8,8 +8,8 @@ def generate_FLtable(args, car_tripinfo):
         
     T = args.num_steps                      # total_training_time
     T_round = args.round_duration           # duration of a round
-    MU_local_train = args.MU_local_train   # param of shift exponential distribution function for local training delay
-    BETA_local_train = args.BETA_local_train   # param of shift exponential distribution function for local training delay
+    MU_local_train = args.local_iter * args.mu_local_train   # param of shift exponential distribution function for local training delay
+    BETA_local_train = args.local_iter * args.beta_local_train   # param of shift exponential distribution function for local training delay
     delay_download = args.delay_download      # download delay
     delay_upload = args.delay_upload          # upload delay
     

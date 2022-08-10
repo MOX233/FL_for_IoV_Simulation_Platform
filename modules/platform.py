@@ -3,11 +3,11 @@ from utils.log_utils import save_ckpt
 from modules import FLtable_module, data_allocate_module, task_module, traffic_module, train_module, evaluation_module
 
 def run_platform(args):
-    dataset_train, net_glob, generate_split_dict_for_task, evaluator_for_task, trainer_for_task = task_module.get_task(args)
+    dataset_train, net_glob, generate_split_dict_for_task, evaluator_for_task, trainer_for_task, plot_func_for_task = task_module.get_task(args)
     car_tripinfo = traffic_module.get_tripinfo(args)
     FL_table = FLtable_module.generate_FLtable(args, car_tripinfo)
     dict_users = data_allocate_module.data_allocate(args, car_tripinfo, dataset_train, generate_split_dict_for_task)
-    evaluator = evaluation_module.Evaluator(args, evaluator_for_task)
+    evaluator = evaluation_module.Evaluator(args, evaluator_for_task, plot_func_for_task)
     trainer = train_module.Trainer(args, FL_table, dataset_train, dict_users, trainer_for_task)
 
     rounds = len(FL_table.keys())

@@ -1,12 +1,12 @@
-from utils.plot_utils import plot_loss_acc_curve
 from utils.log_utils import save_training_log
 
 class Evaluator():
-    def __init__(self, args, evaluator_for_task) -> None:
+    def __init__(self, args, evaluator_for_task, plot_func) -> None:
         self.val_loss_list = []
         self.eval_metrices_list = []
         self.args = args
         self.evaluator_for_task = evaluator_for_task
+        self.plot_func = plot_func
 
     def eval_for_None(self, net, round):
         if len(self.val_loss_list) > 0:
@@ -24,5 +24,5 @@ class Evaluator():
         
     
     def record_eval_result(self, train_loss_list, round):
-        plot_loss_acc_curve(self.args, train_loss_list, self.val_loss_list, self.eval_metrices_list, round)
+        self.plot_func(self.args, train_loss_list, self.val_loss_list, self.eval_metrices_list, round)
         save_training_log(self.args, train_loss_list, self.val_loss_list, self.eval_metrices_list)

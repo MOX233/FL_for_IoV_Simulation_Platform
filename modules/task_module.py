@@ -1,11 +1,14 @@
 
 import os
 import torch
-from task_interface.traj_pred import get_net_for_traj_pred, get_dataset_for_traj_pred, generate_split_dict_for_traj_pred, Evaluator_for_traj_pred, Trainer_for_traj_pred
+from task_interface.traj_pred import get_traj_pred_task
+from task_interface.digit_cls import get_digit_cls_task
 
 def get_task(args):
     if args.task == "traj_pred":
-        dataset_train, net, generate_split_dict_for_task, evaluator_for_task, trainer_for_task =  get_traj_pred_task(args)
+        dataset_train, net, generate_split_dict_for_task, evaluator_for_task, trainer_for_task, plot_func_for_task =  get_traj_pred_task(args)
+    elif args.task == "digit_cls":
+        dataset_train, net, generate_split_dict_for_task, evaluator_for_task, trainer_for_task, plot_func_for_task =  get_digit_cls_task(args)
     else:
         exit("Unrecognized task")
 
@@ -21,7 +24,7 @@ def get_task(args):
         ckpt = torch.load(ckpt_path, map_location=args.device)
         load_pretrain(net, ckpt["state_dict"])
 
-    return dataset_train, net, generate_split_dict_for_task, evaluator_for_task, trainer_for_task
+    return dataset_train, net, generate_split_dict_for_task, evaluator_for_task, trainer_for_task, plot_func_for_task
 
 def load_pretrain(net, pretrain_dict):
     state_dict = net.state_dict()
@@ -32,10 +35,3 @@ def load_pretrain(net, pretrain_dict):
                 value = value.data
             state_dict[key] = value
     net.load_state_dict(state_dict)
-
-def get_traj_pred_task(args):
-    net = get_net_for_traj_pred(args)
-    dataset_train, dataset_val = get_dataset_for_traj_pred(args)
-    evaluator_for_traj_pred = Evaluator_for_traj_pred(args, dataset_val)
-    trainer_for_traj_pred = Trainer_for_traj_pred(args, dataset_train)
-    return dataset_train, net, generate_split_dict_for_traj_pred, evaluator_for_traj_pred, trainer_for_traj_pred
