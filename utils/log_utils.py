@@ -31,7 +31,7 @@ def save_training_log(args, train_loss_list, val_loss_list, eval_metrices_list):
     if args.log_save_path != "default":
             savePath = args.log_save_path
     os.makedirs(savePath, exist_ok=True)
-    savePath = os.path.join(savePath,'RoundDuration{}_LocalTrainDelay_mu{}_beta{}_LocalIterNum{}_LocalBatchSize{}_Lambda{}_maxSpeed{}_noniid{}.pkl'.format(args.round_duration, args.mu_local_train, args.beta_local_train, args.local_iter, args.local_bs, args.Lambda, args.maxSpeed, args.non_iid))
+    savePath = os.path.join(savePath, str(args.save_id)+'.pkl')
     with open(savePath,'wb') as f:
         pkl.dump(log_dict, f)
 

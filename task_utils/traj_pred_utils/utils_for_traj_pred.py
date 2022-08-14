@@ -112,8 +112,7 @@ def plot_for_traj_pred_task(args, loss_train, loss_val, metrices_eval, rounds):
     if args.plot_save_path != "default":
         savePath = args.plot_save_path
     os.makedirs(savePath, exist_ok=True)
-    savePath = os.path.join(savePath, 'RoundDuration{}_LocalTrainDelay_mu{}_beta{}_LocalIterNum{}_LocalBatchSize{}_Lambda{}_maxSpeed{}_noniid{}.png'.format(
-        args.round_duration, args.mu_local_train, args.beta_local_train, args.local_iter, args.local_bs, args.Lambda, args.maxSpeed, args.non_iid))
+    savePath = os.path.join(savePath, str(args.save_id)+'.png')
     #debug
     #import ipdb;ipdb.set_trace()
     plt.savefig(savePath)

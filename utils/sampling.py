@@ -46,7 +46,10 @@ def sample_noniid(dataset, split_dict, num_items, num_users):
         for i in range(num_users):
             key_table = list(split_dict.keys())
             partial_idxs = split_dict[key_table[np.random.randint(len(key_table))]]
-            dict_users[i] = set(np.random.choice(partial_idxs, num_items, replace=True))
+            if num_items <= len(partial_idxs):
+                dict_users[i] = set(np.random.choice(partial_idxs, num_items, replace=False))
+            else:
+                dict_users[i] = set(partial_idxs)
         return dict_users
     elif type(num_items) == list:
         assert len(num_items) == num_users
@@ -54,7 +57,10 @@ def sample_noniid(dataset, split_dict, num_items, num_users):
         for i in range(num_users):
             key_table = list(split_dict.keys())
             partial_idxs = split_dict[key_table[np.random.randint(len(key_table))]]
-            dict_users[i] = set(np.random.choice(partial_idxs, num_items[i], replace=True))
+            if num_items[i] <= len(partial_idxs):
+                dict_users[i] = set(np.random.choice(partial_idxs, num_items[i], replace=False))
+            else:
+                dict_users[i] = set(partial_idxs)
         return dict_users
     else:
         exit('The type of num_items is wrong!')
