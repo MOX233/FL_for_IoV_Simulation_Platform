@@ -8,11 +8,16 @@ import argparse
 def args_parser():
     parser = argparse.ArgumentParser()
 
-    #task
+    # task
     parser.add_argument("--task", type=str, default="traj_pred") # identify the specific task.
 
     # cash
     parser.add_argument("--save_id", type=str, default="default") # identify saving path. Need to change in the future
+    parser.add_argument("-f", type=str, default="default")
+
+    # v2v
+    parser.add_argument('--v2v', type=int, default=0,
+                        help="determine type of FLtable genaration method and type of Trainer")
 
     # federated arguments
     parser.add_argument('--num_items', type=int, default=1024,
@@ -115,6 +120,8 @@ def args_parser():
                         help="The save path for the plots of loss and other metrices.")
     parser.add_argument('--log_save_path', type=str, default="default",
                         help="The save path for the training log of loss and other metrices.")
+    parser.add_argument('--ckpt_save_path', type=str, default="default",
+                        help="The save path for the ckpt.")           
     parser.add_argument("--traj_save_path",
                         required=False,
                         type=str,

@@ -7,7 +7,7 @@ from torch import nn
 import copy
 from utils.FL_utils import FedAvg, DatasetSplit, Trainer_abc, Evaluator_abc
 from task_utils.digit_cls_utils.model import Net
-from task_utils.digit_cls_utils.update import LocalUpdate_for_digit_cls
+from task_utils.digit_cls_utils.update import LocalUpdate_for_digit_cls, LocalUpdate_for_digit_cls_with_V2V
 from task_utils.digit_cls_utils.utils_for_digit_cls import generate_split_dict, plot_for_digit_cls_task
 
 
@@ -15,7 +15,12 @@ def get_digit_cls_task(args):
     net = get_net_for_digit_cls(args)
     dataset_train, dataset_val = get_dataset_for_digit_cls(args)
     evaluator_for_digit_cls = Evaluator_for_digit_cls(args, dataset_val)
-    trainer_for_digit_cls = Trainer_for_digit_cls(args, dataset_train)
+    if args.v2v == 0:
+        trainer_for_digit_cls = Trainer_for_digit_cls(args, dataset_train)
+    elif args.v2v == -1:
+        trainer_for_digit_cls = Trainer_for_digit_cls(args, dataset_train)
+    else:
+        trainer_for_digit_cls = Trainer_for_digit_cls_with_V2V(args, dataset_train)
     plot_for_digit_cls = plot_for_digit_cls_task
     return dataset_train, net, generate_split_dict_for_digit_cls, evaluator_for_digit_cls, trainer_for_digit_cls, plot_for_digit_cls
 
@@ -90,6 +95,36 @@ class Trainer_for_digit_cls(Trainer_abc):
         train_loss = sum(loss_locals) / len(loss_locals)
         return train_loss
 
+
+class Trainer_for_digit_cls_with_V2V(Trainer_abc):
+    # local_iter and local_batch_size can be given flexibly
+    def __init__(self, args, dataset_train):
+        super().__init__(args, dataset_train)
+
+    def train_a_round(self, idxs_models, net_glob):
+        loss_locals = []
+        w_locals = []
+        for idxs in idxs_models:
+            # idxs = [(car_id, car_iter_num),...]
+            local = LocalUpdate_for_digit_cls_with_V2V(args=self.args, dataset=self.dataset_train, car_info_list=idxs, local_bs=self.args.local_bs)
+            w, loss = local.train(net=copy.deepcopy(net_glob), local_iter=self.args.local_iter)
+            w_locals.append(copy.deepcopy(w))
+
+            loss_locals.append(copy.deepcopy(loss))
+        # update global weights
+        if self.args.non_iid:
+            #w_glob = FedAvg_digit_weighted(w_locals, skew=self.args.skew) #TODO
+            w_glob = FedAvg(w_locals)
+        else:
+            w_glob = FedAvg(w_locals)
+
+        # copy weight to net_glob
+        net_glob.load_state_dict(w_glob)
+
+        # print loss
+        train_loss = sum(loss_locals) / len(loss_locals)
+        return train_loss
+        
 ################     trainer    ###################
 ###################################################
 

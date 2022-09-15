@@ -17,7 +17,7 @@ from typing import Any, Dict, List, Tuple, Union
 from torch.utils.data import DataLoader
 from argoverse.map_representation.map_api import ArgoverseMap
 from argoverse.evaluation.eval_forecasting import compute_forecasting_metrics
-
+from scipy.signal import savgol_filter
 from utils.plot_utils import min_ignore_None, max_ignore_None, plot_dashed_line_for_None_samples
 
 FEATURE_FORMAT = {
@@ -256,12 +256,24 @@ def viz_predictions(
             plt.savefig('./viz_trajectories/'+str(idx)+'.png')
             plt.clf()
 
+def smooth(traj):
+    #traj (30,2)
+    window_length = 15
+    polyorder = 2
+    length = len(traj)
+    x_sm = savgol_filter(traj[:,0], window_length, polyorder, mode= 'nearest')
+    y_sm = savgol_filter(traj[:,1], window_length, polyorder, mode= 'nearest')
+    traj_sm = np.zeros_like(traj)
+    traj_sm[:,0] = x_sm
+    traj_sm[:,1] = y_sm
+    return traj_sm
 
 def judge_action(traj, sth=0.1):
     
     #traj shape (50,2)
     num_step = len(traj)
     traj = np.squeeze(traj)
+    traj = smooth(traj)
     eps = 1e-8
     traj_norm = traj - traj[0,:]
     xt,yt = traj_norm[-1,0], traj_norm[-1,1]

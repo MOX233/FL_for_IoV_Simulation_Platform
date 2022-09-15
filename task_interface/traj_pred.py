@@ -5,7 +5,7 @@ import numpy as np
 import copy
 from utils.FL_utils import FedAvg, DatasetSplit, Trainer_abc, Evaluator_abc
 from task_utils.traj_pred_utils.lanegcn import get_model
-from task_utils.traj_pred_utils.update import LocalUpdate_for_traj_pred
+from task_utils.traj_pred_utils.update import LocalUpdate_for_traj_pred, LocalUpdate_for_traj_pred_with_V2V
 from task_utils.traj_pred_utils.FedAvg_for_traj_pred import FedAvg_city_weighted, FedAvg_behavior_weighted
 from task_utils.traj_pred_utils.utils_for_traj_pred import generate_city_split_dict, generate_behavior_split_dict, plot_for_traj_pred_task
 
@@ -13,7 +13,12 @@ def get_traj_pred_task(args):
     net = get_net_for_traj_pred(args)
     dataset_train, dataset_val = get_dataset_for_traj_pred(args)
     evaluator_for_traj_pred = Evaluator_for_traj_pred(args, dataset_val)
-    trainer_for_traj_pred = Trainer_for_traj_pred(args, dataset_train)
+    if args.v2v == 0:
+        trainer_for_traj_pred = Trainer_for_traj_pred(args, dataset_train)
+    elif args.v2v == -1:
+        trainer_for_traj_pred = Trainer_for_traj_pred(args, dataset_train)
+    else:
+        trainer_for_traj_pred = Trainer_for_traj_pred_with_V2V(args, dataset_train)
     plot_func_for_traj_pred = plot_for_traj_pred_task
     return dataset_train, net, generate_split_dict_for_traj_pred, evaluator_for_traj_pred, trainer_for_traj_pred, plot_func_for_traj_pred
 
@@ -71,6 +76,45 @@ class Trainer_for_traj_pred(Trainer_abc):
         behavior_locals = []
         for idxs in idxs_list:
             local = LocalUpdate_for_traj_pred(args=self.args, dataset=self.dataset_train, idxs=idxs, local_bs=self.args.local_bs)
+            w, loss, _city, _behavior = local.train(net=copy.deepcopy(net_glob), config=self.config, local_iter=self.args.local_iter)
+            w_locals.append(copy.deepcopy(w))
+
+            city_locals.append(_city)
+            behavior_locals.append(_behavior[0][0])
+
+            loss_locals.append(copy.deepcopy(loss))
+        # update global weights
+        if self.args.city_skew and self.args.non_iid:
+            w_glob = FedAvg_city_weighted(w_locals, city_locals, skew=self.args.skew)
+        elif self.args.behavior_skew and self.args.non_iid:
+            w_glob = FedAvg_behavior_weighted(w_locals, behavior_locals, skew=self.args.skew)
+        else:
+            w_glob = FedAvg(w_locals)
+
+        # copy weight to net_glob
+        net_glob.load_state_dict(w_glob)
+
+        # print loss
+        train_loss = sum(loss_locals) / len(loss_locals)
+        return train_loss
+
+
+class Trainer_for_traj_pred_with_V2V(Trainer_abc):
+    # local_iter and local_batch_size can be given flexibly
+    def __init__(self, args, dataset_train):
+        super().__init__(args, dataset_train)
+        #self.args = args
+        #self.dataset_train = dataset_train
+        self.config, _, _, _, _, _ = get_model(args)
+
+    def train_a_round(self, idxs_models, net_glob):
+        loss_locals = []
+        w_locals = []
+        city_locals = []
+        behavior_locals = []
+        for idxs in idxs_models:
+            # idxs = [(car_id, car_iter_num),...]
+            local = LocalUpdate_for_traj_pred_with_V2V(args=self.args, dataset=self.dataset_train, car_info_list=idxs, local_bs=self.args.local_bs)
             w, loss, _city, _behavior = local.train(net=copy.deepcopy(net_glob), config=self.config, local_iter=self.args.local_iter)
             w_locals.append(copy.deepcopy(w))
 

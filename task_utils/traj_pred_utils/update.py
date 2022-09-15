@@ -75,6 +75,72 @@ class LocalUpdate_for_traj_pred(object):
         # return net.state_dict(), sum(iter_loss) / len(iter_loss)
         return net.state_dict(), sum(iter_loss) / len(iter_loss), data['city'][0], judge_action_for_batch(data)
 
+
+class LocalUpdate_for_traj_pred_with_V2V(object):
+    # local_iter and local_batch_size can be given flexibly
+    def __init__(self, args, dataset=None, car_info_list=None, local_bs=1):
+        self.args = args
+        self.car_info_list = car_info_list
+        #idxs = [(car_id, car_iter_num, car_dataset_idxs),...]
+        self.ldr_train_list = []
+        for car_info in self.car_info_list:
+            self.ldr_train_list.append(
+                DataLoader(
+                    #dataset,
+                    DatasetSplit(dataset, car_info[2]),
+                    batch_size=local_bs,
+                    shuffle=True,
+                    collate_fn=collate_fn,
+                    pin_memory=True,
+                    worker_init_fn=worker_init_fn,
+                    drop_last=True,
+                )
+            )
+        return
+
+    def train(self, net, config, local_iter=1):
+        net.train()
+        # train and update
+        loss = Loss(config).cuda()
+        optimizer = torch.optim.SGD(
+            net.parameters(), lr=self.args.lr, momentum=self.args.momentum)
+        iter_loss = []
+        metrics = dict()
+
+        for car_info, car_ldr_train in zip(self.car_info_list, self.ldr_train_list):
+            car_local_iter = car_info[1]
+            car_local_epoch = int(car_local_iter/len(car_ldr_train))
+            for epoch in range(car_local_epoch):
+                for i, data in enumerate(car_ldr_train):
+                    data = dict(data)
+                    output = net(data)
+                    loss_out = loss(output, data)
+                    post_process = PostProcess(config).cuda()
+                    post_out = post_process(output, data)
+                    post_process.append(metrics, loss_out, post_out)
+                    net.zero_grad()
+                    loss_out["loss"].backward()
+                    optimizer.step()
+                    iter_loss.append(loss_out["loss"].item())
+            for i, data in enumerate(car_ldr_train):
+                #import ipdb;ipdb.set_trace()
+                if i < local_iter-car_local_epoch*len(car_ldr_train):
+                    data = dict(data)
+                    output = net(data)
+                    loss_out = loss(output, data)
+                    post_process = PostProcess(config).cuda()
+                    post_out = post_process(output, data)
+                    post_process.append(metrics, loss_out, post_out)
+                    net.zero_grad()
+                    loss_out["loss"].backward()
+                    optimizer.step()
+                    iter_loss.append(loss_out["loss"].item())
+                else:
+                    break
+
+        return net.state_dict(), sum(iter_loss) / len(iter_loss), data['city'][0], judge_action_for_batch(data)
+
+
 def worker_init_fn(pid):
     np_seed = int(pid)
     np.random.seed(np_seed)
