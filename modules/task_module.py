@@ -3,12 +3,15 @@ import os
 import torch
 from task_interface.traj_pred import get_traj_pred_task
 from task_interface.digit_cls import get_digit_cls_task
+from task_interface.beam_select import get_beam_select_task
 
 def get_task(args):
     if args.task == "traj_pred":
         dataset_train, net, generate_split_dict_for_task, evaluator_for_task, trainer_for_task, plot_func_for_task =  get_traj_pred_task(args)
     elif args.task == "digit_cls":
         dataset_train, net, generate_split_dict_for_task, evaluator_for_task, trainer_for_task, plot_func_for_task =  get_digit_cls_task(args)
+    elif args.task == "beam_select":
+        dataset_train, net, generate_split_dict_for_task, evaluator_for_task, trainer_for_task, plot_func_for_task =  get_beam_select_task(args)
     else:
         exit("Unrecognized task")
 

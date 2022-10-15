@@ -41,7 +41,7 @@ def plot_for_traj_pred_task(args, loss_train, loss_val, metrices_eval, rounds):
     plt.subplot(2, 2, 1)
     plt.plot(range(len(loss_train)), loss_train,
              color='r', marker='o', markersize=4, label='Training Loss')
-    plot_dashed_line_for_None_samples(range(len(loss_train)), loss_train, color='r')
+    #plot_dashed_line_for_None_samples(range(len(loss_train)), loss_train, color='r')
 
     plt.plot(range(len(loss_val)), loss_val,
              color='b', label='Validation Loss')
