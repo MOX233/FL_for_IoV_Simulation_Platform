@@ -60,3 +60,6 @@ saved_*
 pdfs*
 __pyca*
 ckpt
+
+# do not ignore
+!车联网分布式训练仿真平台搭建与优化算法设计.pdf
